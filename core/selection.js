@@ -126,6 +126,64 @@ function serializeRange(range) {
 
 
 // =====================================================
+// CHECK IF RANGE IS SAFE TO HIGHLIGHT
+// =====================================================
+
+function isSafeRange(range) {
+
+    const startContainer =
+        range.startContainer;
+
+    const endContainer =
+        range.endContainer;
+
+    // -------------------------------------------------
+    // SAME NODE = SAFE
+    // -------------------------------------------------
+
+    if (
+        startContainer ===
+        endContainer
+    ) {
+
+        return true;
+    }
+
+    // -------------------------------------------------
+    // ALLOW ENTIRE ELEMENT SELECTIONS
+    // -------------------------------------------------
+
+    const commonAncestor =
+        range.commonAncestorContainer;
+
+    // If selection fully contains an anchor
+    // but does not partially split it,
+    // allow it.
+
+    const fragment =
+        range.cloneContents();
+
+    const partialLinks =
+        fragment.querySelectorAll("a");
+
+    for (const link of partialLinks) {
+
+        if (
+            !link.textContent.trim()
+        ) {
+            return false;
+        }
+    }
+
+    // -------------------------------------------------
+    // REJECT COMPLEX MULTI-NODE RANGES
+    // -------------------------------------------------
+
+    return false;
+}
+
+
+// =====================================================
 // GET NODE FROM XPATH
 // =====================================================
 

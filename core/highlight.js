@@ -4,35 +4,28 @@ console.log("HIGHLIGHT JS LOADED");
 // APPLY HIGHLIGHT
 // =====================================================
 
-async function applyHighlight(
-    range
-) {
-
+async function applyHighlight(range) {
+    if (!isSafeRange(range)) {
+        showToast(
+            "Complex highlights are not supported yet",
+            "error"
+        );
+        return;
+    }
     if (range.collapsed) {
         return;
     }
-
+    let span = null;
     try {
-
         // -------------------------------------------------
-        // SERIALIZE RANGE BEFORE DOM MODIFICATION
+        // SERIALIZE RANGE BEFORE DOM CHANGES
         // -------------------------------------------------
-
         const serializedRange =
             serializeRange(range);
-
         // -------------------------------------------------
         // EXTRACT CONTENT
         // -------------------------------------------------
-
-        const extractedContents =
-            range.extractContents();
-
-        // -------------------------------------------------
-        // CREATE SPAN
-        // -------------------------------------------------
-
-        const span =
+        span =
             document.createElement(
                 "span"
             );
@@ -40,18 +33,31 @@ async function applyHighlight(
         span.className =
             "thought-highlight";
 
-        span.appendChild(
-            extractedContents
-        );
+        try {
+
+            range.surroundContents(
+                span
+            );
+
+        } catch (err) {
+
+            console.error(
+                "surroundContents failed:",
+                err
+            );
+
+            showToast(
+
+                "Could not create highlight",
+
+                "error"
+            );
+
+            return;
+        }
 
         // -------------------------------------------------
-        // INSERT HIGHLIGHT
-        // -------------------------------------------------
-
-        range.insertNode(span);
-
-        // -------------------------------------------------
-        // SAVE HIGHLIGHT
+        // SAVE AFTER DOM INSERTION
         // -------------------------------------------------
 
         const saved =
@@ -83,6 +89,28 @@ async function applyHighlight(
             "Highlight failed:",
             err
         );
+
+        // -------------------------------------------------
+        // ROLLBACK FAILED INSERTION
+        // -------------------------------------------------
+
+        if (span) {
+
+            const parent =
+                span.parentNode;
+
+            while (
+                span.firstChild
+            ) {
+
+                parent.insertBefore(
+                    span.firstChild,
+                    span
+                );
+            }
+
+            span.remove();
+        }
 
         showToast(
 
@@ -140,15 +168,9 @@ function highlightTextOnPage(
         // EXTRACT + WRAP CONTENT
         // -------------------------------------------------
 
-        const extracted =
-            range.extractContents();
-
-        span.appendChild(
-            extracted
+        range.surroundContents(
+            span
         );
-
-        range.insertNode(span);
-
     } catch (err) {
 
         console.log(
