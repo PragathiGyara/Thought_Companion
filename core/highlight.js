@@ -13,6 +13,13 @@ function applyHighlight(range) {
     try {
 
         // -------------------------------------------------
+        // SERIALIZE RANGE BEFORE DOM MODIFICATION
+        // -------------------------------------------------
+
+        const serializedRange =
+            serializeRange(range);
+
+        // -------------------------------------------------
         // EXTRACT SELECTED CONTENT
         // -------------------------------------------------
 
@@ -42,11 +49,11 @@ function applyHighlight(range) {
         range.insertNode(span);
 
         // -------------------------------------------------
-        // SAVE HIGHLIGHT
+        // SAVE HIGHLIGHT DATA
         // -------------------------------------------------
 
         saveHighlight(
-            span.textContent
+            serializedRange
         );
 
         console.log(

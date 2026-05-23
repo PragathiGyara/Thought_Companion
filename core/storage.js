@@ -30,7 +30,7 @@ function getAllHighlights(callback) {
 // SAVE HIGHLIGHT
 // =====================================================
 
-function saveHighlight(text) {
+function saveHighlight(highlightData) {
 
     const pageUrl =
         window.location.href;
@@ -45,17 +45,30 @@ function saveHighlight(text) {
             const alreadyExists =
                 highlights.some(
                     h =>
+
                         h.url === pageUrl &&
-                        h.text === text
+
+                        h.text ===
+                        highlightData.text &&
+
+                        h.startXPath ===
+                        highlightData.startXPath &&
+
+                        h.startOffset ===
+                        highlightData.startOffset
                 );
 
             if (!alreadyExists) {
 
                 highlights.push({
 
-                    url: pageUrl,
+                    id:
+                        crypto.randomUUID(),
 
-                    text: text
+                    url:
+                        pageUrl,
+
+                    ...highlightData
 
                 });
 
