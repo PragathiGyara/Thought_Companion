@@ -4,7 +4,9 @@ console.log("HIGHLIGHT JS LOADED");
 // APPLY HIGHLIGHT
 // =====================================================
 
-function applyHighlight(range) {
+async function applyHighlight(
+    range
+) {
 
     if (range.collapsed) {
         return;
@@ -20,14 +22,14 @@ function applyHighlight(range) {
             serializeRange(range);
 
         // -------------------------------------------------
-        // EXTRACT SELECTED CONTENT
+        // EXTRACT CONTENT
         // -------------------------------------------------
 
         const extractedContents =
             range.extractContents();
 
         // -------------------------------------------------
-        // CREATE HIGHLIGHT SPAN
+        // CREATE SPAN
         // -------------------------------------------------
 
         const span =
@@ -49,22 +51,44 @@ function applyHighlight(range) {
         range.insertNode(span);
 
         // -------------------------------------------------
-        // SAVE HIGHLIGHT DATA
+        // SAVE HIGHLIGHT
         // -------------------------------------------------
 
-        saveHighlight(
-            serializedRange
-        );
+        const saved =
+            await saveHighlight(
+                serializedRange
+            );
 
-        console.log(
-            "Highlighted!"
-        );
+        // -------------------------------------------------
+        // HANDLE STORAGE FAILURE
+        // -------------------------------------------------
+
+        if (!saved) {
+
+            showToast(
+
+                "Highlight created but could not be saved",
+
+                "error"
+            );
+
+            console.error(
+                "Storage save failed"
+            );
+        }
 
     } catch (err) {
 
         console.error(
             "Highlight failed:",
             err
+        );
+
+        showToast(
+
+            "Could not create highlight",
+
+            "error"
         );
     }
 }
@@ -138,20 +162,52 @@ function highlightTextOnPage(
 // RESTORE ALL HIGHLIGHTS
 // =====================================================
 
+// =====================================================
+// RESTORE ALL HIGHLIGHTS
+// =====================================================
+
 function restoreHighlights() {
 
     getPageHighlights(
         (pageHighlights) => {
 
+            let failedCount = 0;
+
             pageHighlights.forEach(
                 (highlight) => {
 
-                    highlightTextOnPage(
-                        highlight
-                    );
+                    try {
 
+                        const success =
+                            highlightTextOnPage(
+                                highlight
+                            );
+
+                        if (!success) {
+
+                            failedCount++;
+                        }
+
+                    } catch (err) {
+
+                        failedCount++;
+                    }
                 }
             );
+
+            // ---------------------------------------------
+            // SHOW SINGLE FAILURE TOAST
+            // ---------------------------------------------
+
+            if (failedCount > 0) {
+
+                showToast(
+
+                    `${failedCount} highlight(s) could not be restored`,
+
+                    "error"
+                );
+            }
         }
     );
 }

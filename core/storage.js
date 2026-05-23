@@ -30,59 +30,110 @@ function getAllHighlights(callback) {
 // SAVE HIGHLIGHT
 // =====================================================
 
-function saveHighlight(highlightData) {
+// =====================================================
+// SAVE HIGHLIGHT
+// =====================================================
+
+async function saveHighlight(
+    highlightData
+) {
 
     const pageUrl =
         window.location.href;
 
-    getAllHighlights(
-        (highlights) => {
+    return new Promise(
+        (resolve) => {
 
-            // ---------------------------------------------
-            // PREVENT DUPLICATES
-            // ---------------------------------------------
+            getAllHighlights(
+                (highlights) => {
 
-            const alreadyExists =
-                highlights.some(
-                    h =>
+                    // -----------------------------
+                    // PREVENT DUPLICATES
+                    // -----------------------------
 
-                        h.url === pageUrl &&
+                    const alreadyExists =
+                        highlights.some(
+                            h =>
 
-                        h.text ===
-                        highlightData.text &&
+                                h.url ===
+                                pageUrl &&
 
-                        h.startXPath ===
-                        highlightData.startXPath &&
+                                h.text ===
+                                highlightData.text &&
 
-                        h.startOffset ===
-                        highlightData.startOffset
-                );
+                                h.startXPath ===
+                                highlightData.startXPath &&
 
-            if (!alreadyExists) {
+                                h.startOffset ===
+                                highlightData.startOffset
+                        );
 
-                highlights.push({
+                    if (alreadyExists) {
 
-                    id:
-                        crypto.randomUUID(),
+                        resolve(true);
 
-                    url:
-                        pageUrl,
+                        return;
+                    }
 
-                    ...highlightData
+                    // -----------------------------
+                    // ADD NEW HIGHLIGHT
+                    // -----------------------------
 
-                });
+                    highlights.push({
 
-                chrome.storage.local.set({
+                        id:
+                            crypto.randomUUID(),
 
-                    [HIGHLIGHT_STORAGE_KEY]:
-                        highlights
+                        url:
+                            pageUrl,
 
-                });
+                        ...highlightData
+                    });
 
-                console.log(
-                    "Highlight saved!"
-                );
-            }
+                    // -----------------------------
+                    // SAVE TO STORAGE
+                    // -----------------------------
+
+                    chrome.storage.local.set(
+
+                        {
+                            [HIGHLIGHT_STORAGE_KEY]:
+                                highlights
+                        },
+
+                        () => {
+
+                            // ---------------------
+                            // HANDLE STORAGE ERRORS
+                            // ---------------------
+
+                            if (
+                                chrome.runtime
+                                    .lastError
+                            ) {
+
+                                console.error(
+
+                                    "Storage failed:",
+
+                                    chrome.runtime
+                                        .lastError
+                                );
+
+                                resolve(false);
+
+                                return;
+                            }
+
+                            console.log(
+                                "Highlight saved!"
+                            );
+
+                            resolve(true);
+                        }
+                    );
+                }
+            );
         }
     );
 }

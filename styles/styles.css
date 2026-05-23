@@ -41,3 +41,83 @@
 .thought-highlight {
     background-color: yellow;
 }
+
+/* ===================================================== */
+/* TOAST */
+/* ===================================================== */
+
+.thought-toast {
+
+    position: fixed;
+
+    bottom: 24px;
+    right: 24px;
+
+    z-index: 2147483647;
+
+    padding: 12px 16px;
+
+    border-radius: 10px;
+
+    font-size: 14px;
+
+    font-family: sans-serif;
+
+    color: white;
+
+    background: #1f2937;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.25);
+
+    animation:
+        thought-toast-fade-in 0.2s ease;
+
+    max-width: 320px;
+}
+
+/* ----------------------------------------------------- */
+/* SUCCESS */
+/* ----------------------------------------------------- */
+
+.thought-toast-success {
+
+    background: #166534;
+}
+
+/* ----------------------------------------------------- */
+/* ERROR */
+/* ----------------------------------------------------- */
+
+.thought-toast-error {
+
+    background: #991b1b;
+}
+
+/* ----------------------------------------------------- */
+/* INFO */
+/* ----------------------------------------------------- */
+
+.thought-toast-info {
+
+    background: #1f2937;
+}
+
+/* ===================================================== */
+/* TOAST ANIMATION */
+/* ===================================================== */
+
+@keyframes thought-toast-fade-in {
+
+    from {
+
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

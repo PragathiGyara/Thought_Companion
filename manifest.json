@@ -16,6 +16,7 @@
       "js": [
         "content/toolbar.js",
         "content/content.js",
+        "content/toast.js",
 
         "core/storage.js",
         "core/highlight.js",
