@@ -1,0 +1,38 @@
+#thought-companion-toolbar {
+    position: absolute;
+
+    display: flex;
+    gap: 8px;
+
+    background: #1e1e1e;
+    color: white;
+
+    padding: 8px 10px;
+
+    border-radius: 10px;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+
+    z-index: 999999;
+
+    font-family: sans-serif;
+}
+
+#thought-companion-toolbar button {
+    background: #2d2d2d;
+    color: white;
+
+    border: none;
+
+    padding: 6px 10px;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    font-size: 12px;
+}
+
+#thought-companion-toolbar button:hover {
+    background: #444;
+}
