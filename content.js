@@ -2,6 +2,34 @@ console.log("CONTENT JS LOADED");
 
 let toolbar = null;
 
+
+function saveHighlight(text) {
+
+    const pageUrl = window.location.href;
+
+    chrome.storage.local.get(
+        ["highlights"],
+        (result) => {
+
+            const highlights =
+                result.highlights || [];
+
+            highlights.push({
+                url: pageUrl,
+                text: text
+            });
+
+            chrome.storage.local.set({
+                highlights: highlights
+            });
+
+            console.log(
+                "Highlight saved!"
+            );
+        }
+    );
+}
+
 function createToolbar(x, y) {
     console.log("Toolbar function called");
 
@@ -61,6 +89,9 @@ function createToolbar(x, y) {
 
                 // Insert back into DOM
                 range.insertNode(span);
+
+                // Save highlight
+                saveHighlight(span.innerText);
 
                 // Clear selection
                 selection.removeAllRanges();
@@ -141,4 +172,92 @@ document.addEventListener("mousedown", (event) => {
     ) {
         removeToolbar();
     }
+});
+
+
+function highlightTextOnPage(text) {
+
+    const walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT
+    );
+
+    while (walker.nextNode()) {
+
+        const node = walker.currentNode;
+
+        if (
+            node.parentNode &&
+            node.parentNode.classList &&
+            node.parentNode.classList.contains(
+                "thought-highlight"
+            )
+        ) {
+            continue;
+        }
+
+        const nodeText = node.nodeValue;
+
+        const index = nodeText.indexOf(text);
+
+        if (index !== -1) {
+
+            const range =
+                document.createRange();
+
+            range.setStart(node, index);
+
+            range.setEnd(
+                node,
+                index + text.length
+            );
+
+            const span =
+                document.createElement("span");
+
+            span.className =
+                "thought-highlight";
+
+            try {
+
+                range.surroundContents(span);
+
+            } catch (err) {
+
+                console.log(
+                    "Restore failed"
+                );
+            }
+
+            break;
+        }
+    }
+}
+
+function restoreHighlights() {
+
+    const pageUrl = window.location.href;
+
+    chrome.storage.local.get(
+        ["highlights"],
+        (result) => {
+
+            const highlights =
+                result.highlights || [];
+
+            const pageHighlights =
+                highlights.filter(
+                    h => h.url === pageUrl
+                );
+
+            pageHighlights.forEach(h => {
+                highlightTextOnPage(h.text);
+            });
+        }
+    );
+}
+
+
+window.addEventListener("load", () => {
+    restoreHighlights();
 });
