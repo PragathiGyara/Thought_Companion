@@ -36,3 +36,8 @@
 #thought-companion-toolbar button:hover {
     background: #444;
 }
+
+
+.thought-highlight {
+    background-color: yellow;
+}
