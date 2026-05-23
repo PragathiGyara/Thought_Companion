@@ -73,104 +73,64 @@ function applyHighlight(range) {
 // RESTORE SINGLE HIGHLIGHT
 // =====================================================
 
-function highlightTextOnPage(text) {
+function highlightTextOnPage(
+    highlightData
+) {
 
-    const walker =
-        document.createTreeWalker(
+    // -------------------------------------------------
+    // TRY EXACT RANGE RESTORATION
+    // -------------------------------------------------
 
-            document.body,
-
-            NodeFilter.SHOW_TEXT
+    const range =
+        deserializeRange(
+            highlightData
         );
 
-    while (walker.nextNode()) {
+    if (!range) {
 
-        const node =
-            walker.currentNode;
+        console.log(
+            "Range restoration failed"
+        );
 
-        const parent =
-            node.parentElement;
+        return;
+    }
 
-        if (!parent) {
-            continue;
-        }
-
-        // -------------------------------------------------
-        // SKIP INVALID NODES
-        // -------------------------------------------------
-
-        if (
-            ["SCRIPT", "STYLE", "NOSCRIPT"]
-                .includes(parent.tagName)
-        ) {
-            continue;
-        }
+    try {
 
         // -------------------------------------------------
-        // PREVENT NESTED HIGHLIGHTS
+        // CREATE HIGHLIGHT SPAN
         // -------------------------------------------------
 
-        if (
-            parent.closest(
-                ".thought-highlight"
-            )
-        ) {
-            continue;
-        }
-
-        const nodeText =
-            node.nodeValue;
-
-        const index =
-            nodeText.indexOf(text);
-
-        // -------------------------------------------------
-        // MATCH FOUND
-        // -------------------------------------------------
-
-        if (index !== -1) {
-
-            const range =
-                document.createRange();
-
-            range.setStart(
-                node,
-                index
+        const span =
+            document.createElement(
+                "span"
             );
 
-            range.setEnd(
-                node,
-                index + text.length
-            );
+        span.className =
+            "thought-highlight";
 
-            const span =
-                document.createElement(
-                    "span"
-                );
+        span.dataset.highlightId =
+            highlightData.id;
 
-            span.className =
-                "thought-highlight";
+        // -------------------------------------------------
+        // EXTRACT + WRAP CONTENT
+        // -------------------------------------------------
 
-            try {
+        const extracted =
+            range.extractContents();
 
-                const extracted =
-                    range.extractContents();
+        span.appendChild(
+            extracted
+        );
 
-                span.appendChild(
-                    extracted
-                );
+        range.insertNode(span);
 
-                range.insertNode(span);
+    } catch (err) {
 
-            } catch (err) {
-
-                console.log(
-                    "Restore failed"
-                );
-            }
-
-            break;
-        }
+        console.log(
+            "Restore failed:",
+            err
+        );
     }
 }
 
@@ -187,7 +147,7 @@ function restoreHighlights() {
                 (highlight) => {
 
                     highlightTextOnPage(
-                        highlight.text
+                        highlight
                     );
 
                 }

@@ -18,7 +18,8 @@
         "content/content.js",
 
         "core/storage.js",
-        "core/highlight.js"
+        "core/highlight.js",
+        "core/selection.js"
       ],
 
       "css": [

@@ -1,7 +1,7 @@
 console.log("SELECTION JS LOADED");
 
 // =====================================================
-// GENERATE XPATH FOR NODE
+// GENERATE UNIQUE XPATH FOR NODE
 // =====================================================
 
 function getXPath(node) {
@@ -15,11 +15,35 @@ function getXPath(node) {
         Node.TEXT_NODE
     ) {
 
+        const parent =
+            node.parentNode;
+
+        // ---------------------------------------------
+        // FIND TEXT NODE INDEX
+        // ---------------------------------------------
+
+        let index = 1;
+
+        let sibling =
+            node.previousSibling;
+
+        while (sibling) {
+
+            if (
+                sibling.nodeType ===
+                Node.TEXT_NODE
+            ) {
+
+                index++;
+            }
+
+            sibling =
+                sibling.previousSibling;
+        }
+
         return (
-            getXPath(
-                node.parentNode
-            ) +
-            "/text()"
+            getXPath(parent) +
+            `/text()[${index}]`
         );
     }
 
@@ -35,7 +59,7 @@ function getXPath(node) {
     }
 
     // -------------------------------------------------
-    // COUNT SAME TAG SIBLINGS
+    // FIND ELEMENT INDEX
     // -------------------------------------------------
 
     let index = 1;
@@ -58,7 +82,7 @@ function getXPath(node) {
     }
 
     // -------------------------------------------------
-    // BUILD PATH RECURSIVELY
+    // BUILD ELEMENT PATH
     // -------------------------------------------------
 
     return (
@@ -67,7 +91,7 @@ function getXPath(node) {
         ) +
         "/" +
         node.tagName.toLowerCase() +
-        "[" + index + "]"
+        `[${index}]`
     );
 }
 
@@ -98,4 +122,111 @@ function serializeRange(range) {
         endOffset:
             range.endOffset
     };
+}
+
+
+// =====================================================
+// GET NODE FROM XPATH
+// =====================================================
+
+function getNodeFromXPath(xpath) {
+
+    try {
+
+        const result =
+            document.evaluate(
+
+                xpath,
+
+                document,
+
+                null,
+
+                XPathResult
+                    .FIRST_ORDERED_NODE_TYPE,
+
+                null
+            );
+
+        return result.singleNodeValue;
+
+    } catch (err) {
+
+        console.error(
+            "Invalid XPath:",
+            xpath
+        );
+
+        return null;
+    }
+}
+
+// =====================================================
+// DESERIALIZE RANGE
+// =====================================================
+
+function deserializeRange(
+    serializedRange
+) {
+
+    try {
+
+        // ---------------------------------------------
+        // FIND START/END NODES
+        // ---------------------------------------------
+
+        const startNode =
+            getNodeFromXPath(
+                serializedRange
+                    .startXPath
+            );
+
+        const endNode =
+            getNodeFromXPath(
+                serializedRange
+                    .endXPath
+            );
+
+        if (
+            !startNode ||
+            !endNode
+        ) {
+
+            console.log(
+                "Could not restore nodes"
+            );
+
+            return null;
+        }
+
+        // ---------------------------------------------
+        // CREATE RANGE
+        // ---------------------------------------------
+
+        const range =
+            document.createRange();
+
+        range.setStart(
+            startNode,
+            serializedRange
+                .startOffset
+        );
+
+        range.setEnd(
+            endNode,
+            serializedRange
+                .endOffset
+        );
+
+        return range;
+
+    } catch (err) {
+
+        console.error(
+            "Failed to deserialize range:",
+            err
+        );
+
+        return null;
+    }
 }
