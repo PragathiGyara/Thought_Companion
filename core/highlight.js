@@ -1,57 +1,32 @@
 console.log("HIGHLIGHT JS LOADED");
 
-// ---------------- SAVE ----------------
-
-function saveHighlight(text) {
-
-    const pageUrl = window.location.href;
-
-    chrome.storage.local.get(
-        ["highlights"],
-        (result) => {
-
-            const highlights =
-                result.highlights || [];
-
-            const alreadyExists =
-                highlights.some(
-                    h =>
-                        h.url === pageUrl &&
-                        h.text === text
-                );
-
-            if (!alreadyExists) {
-
-                highlights.push({
-                    url: pageUrl,
-                    text: text
-                });
-
-                chrome.storage.local.set({
-                    highlights: highlights
-                });
-
-                console.log(
-                    "Highlight saved!"
-                );
-            }
-        }
-    );
-}
-
-// ---------------- CREATE HIGHLIGHT ----------------
+// =====================================================
+// APPLY HIGHLIGHT
+// =====================================================
 
 function applyHighlight(range) {
 
-    if (range.collapsed) return;
+    if (range.collapsed) {
+        return;
+    }
 
     try {
+
+        // -------------------------------------------------
+        // EXTRACT SELECTED CONTENT
+        // -------------------------------------------------
 
         const extractedContents =
             range.extractContents();
 
+        // -------------------------------------------------
+        // CREATE HIGHLIGHT SPAN
+        // -------------------------------------------------
+
         const span =
-            document.createElement("span");
+            document.createElement(
+                "span"
+            );
 
         span.className =
             "thought-highlight";
@@ -60,7 +35,15 @@ function applyHighlight(range) {
             extractedContents
         );
 
+        // -------------------------------------------------
+        // INSERT HIGHLIGHT
+        // -------------------------------------------------
+
         range.insertNode(span);
+
+        // -------------------------------------------------
+        // SAVE HIGHLIGHT
+        // -------------------------------------------------
 
         saveHighlight(
             span.textContent
@@ -79,13 +62,17 @@ function applyHighlight(range) {
     }
 }
 
-// ---------------- RESTORE SINGLE ----------------
+// =====================================================
+// RESTORE SINGLE HIGHLIGHT
+// =====================================================
 
 function highlightTextOnPage(text) {
 
     const walker =
         document.createTreeWalker(
+
             document.body,
+
             NodeFilter.SHOW_TEXT
         );
 
@@ -97,9 +84,14 @@ function highlightTextOnPage(text) {
         const parent =
             node.parentElement;
 
-        if (!parent) continue;
+        if (!parent) {
+            continue;
+        }
 
-        // Skip scripts/styles
+        // -------------------------------------------------
+        // SKIP INVALID NODES
+        // -------------------------------------------------
+
         if (
             ["SCRIPT", "STYLE", "NOSCRIPT"]
                 .includes(parent.tagName)
@@ -107,7 +99,10 @@ function highlightTextOnPage(text) {
             continue;
         }
 
-        // Avoid nested highlights
+        // -------------------------------------------------
+        // PREVENT NESTED HIGHLIGHTS
+        // -------------------------------------------------
+
         if (
             parent.closest(
                 ".thought-highlight"
@@ -121,6 +116,10 @@ function highlightTextOnPage(text) {
 
         const index =
             nodeText.indexOf(text);
+
+        // -------------------------------------------------
+        // MATCH FOUND
+        // -------------------------------------------------
 
         if (index !== -1) {
 
@@ -168,37 +167,31 @@ function highlightTextOnPage(text) {
     }
 }
 
-// ---------------- RESTORE ALL ----------------
+// =====================================================
+// RESTORE ALL HIGHLIGHTS
+// =====================================================
 
 function restoreHighlights() {
 
-    const pageUrl =
-        window.location.href;
+    getPageHighlights(
+        (pageHighlights) => {
 
-    chrome.storage.local.get(
-        ["highlights"],
-        (result) => {
+            pageHighlights.forEach(
+                (highlight) => {
 
-            const highlights =
-                result.highlights || [];
+                    highlightTextOnPage(
+                        highlight.text
+                    );
 
-            const pageHighlights =
-                highlights.filter(
-                    h => h.url === pageUrl
-                );
-
-            pageHighlights.forEach(h => {
-
-                highlightTextOnPage(
-                    h.text
-                );
-
-            });
+                }
+            );
         }
     );
 }
 
-// ---------------- AUTO RESTORE ----------------
+// =====================================================
+// AUTO RESTORE
+// =====================================================
 
 window.addEventListener(
     "load",

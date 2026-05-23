@@ -1,8 +1,14 @@
-console.log("CONTENT JS LOADED");
+console.log("TOOLBAR JS LOADED");
+
+// =====================================================
+// TOOLBAR STATE
+// =====================================================
 
 let toolbar = null;
 
-// ---------------- TOOLBAR ----------------
+// =====================================================
+// CREATE TOOLBAR
+// =====================================================
 
 function createToolbar(x, y) {
 
@@ -28,8 +34,9 @@ function createToolbar(x, y) {
         </button>
     `;
 
-    toolbar.style.position =
-        "absolute";
+    // -------------------------------------------------
+    // POSITION TOOLBAR
+    // -------------------------------------------------
 
     toolbar.style.top =
         `${y}px`;
@@ -41,7 +48,10 @@ function createToolbar(x, y) {
         toolbar
     );
 
-    // Prevent losing selection
+    // -------------------------------------------------
+    // PREVENT SELECTION LOSS
+    // -------------------------------------------------
+
     toolbar.addEventListener(
         "mousedown",
         (event) => {
@@ -52,7 +62,9 @@ function createToolbar(x, y) {
         }
     );
 
-    // ---------------- HIGHLIGHT ----------------
+    // -------------------------------------------------
+    // HIGHLIGHT BUTTON
+    // -------------------------------------------------
 
     document
         .getElementById(
@@ -82,7 +94,9 @@ function createToolbar(x, y) {
             }
         );
 
-    // ---------------- ANNOTATE ----------------
+    // -------------------------------------------------
+    // ANNOTATE BUTTON
+    // -------------------------------------------------
 
     document
         .getElementById(
@@ -99,7 +113,9 @@ function createToolbar(x, y) {
             }
         );
 
-    // ---------------- REVIEW ----------------
+    // -------------------------------------------------
+    // REVIEW BUTTON
+    // -------------------------------------------------
 
     document
         .getElementById(
@@ -117,7 +133,9 @@ function createToolbar(x, y) {
         );
 }
 
-// ---------------- REMOVE TOOLBAR ----------------
+// =====================================================
+// REMOVE TOOLBAR
+// =====================================================
 
 function removeToolbar() {
 
@@ -128,60 +146,3 @@ function removeToolbar() {
         toolbar = null;
     }
 }
-
-// ---------------- TEXT SELECTION ----------------
-
-document.addEventListener(
-    "mouseup",
-    (event) => {
-
-        if (
-            toolbar &&
-            toolbar.contains(
-                event.target
-            )
-        ) {
-            return;
-        }
-
-        const selection =
-            window
-                .getSelection()
-                .toString()
-                .trim();
-
-        if (
-            selection.length > 0
-        ) {
-
-            createToolbar(
-                event.pageX,
-                event.pageY
-            );
-
-        } else {
-
-            removeToolbar();
-
-        }
-    }
-);
-
-// ---------------- OUTSIDE CLICK ----------------
-
-document.addEventListener(
-    "mousedown",
-    (event) => {
-
-        if (
-            toolbar &&
-            !toolbar.contains(
-                event.target
-            )
-        ) {
-
-            removeToolbar();
-
-        }
-    }
-);
