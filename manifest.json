@@ -15,6 +15,7 @@
 
       "js": [
         "content/toolbar.js",
+        "content/panel.js",
         "content/content.js",
         "content/toast.js",
 

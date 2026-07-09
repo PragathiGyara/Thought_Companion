@@ -121,3 +121,108 @@
         transform: translateY(0);
     }
 }
+
+/* =====================================================
+   THOUGHT PANEL
+===================================================== */
+
+#thought-panel {
+
+    position: fixed;
+
+    top: 50%;
+
+    right: 0;
+
+    transform: translateY(-50%);
+
+    display: flex;
+
+    z-index: 999999;
+
+    font-family: Arial, sans-serif;
+
+}
+
+#thought-panel-tab {
+
+    width: 42px;
+
+    height: 60px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    background: #2f80ed;
+
+    color: white;
+
+    cursor: pointer;
+
+    border-radius: 8px 0 0 8px;
+
+    font-size: 22px;
+
+}
+
+#thought-panel-content {
+
+    width: 320px;
+
+    height: 500px;
+
+    background: white;
+
+    border-left: 1px solid #ddd;
+
+    box-shadow: 0 0 15px rgba(0,0,0,.15);
+
+    overflow-y: auto;
+
+}
+
+#thought-panel.collapsed
+#thought-panel-content {
+
+    display: none;
+
+}
+
+.thought-panel-header {
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    padding: 18px;
+
+    border-bottom: 1px solid #eee;
+
+}
+
+.thought-section {
+
+    border-bottom: 1px solid #eee;
+
+}
+
+.thought-section-header {
+
+    padding: 15px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+.thought-section-content {
+
+    min-height: 40px;
+
+    padding: 0 15px 15px;
+
+}

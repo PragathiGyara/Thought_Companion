@@ -289,6 +289,7 @@ function restoreHighlights() {
 window.addEventListener(
     "load",
     () => {
+        createThoughtPanel();
 
         restoreHighlights();
 
