@@ -4,22 +4,22 @@ console.log("STORAGE JS LOADED");
 // STORAGE KEY
 // =====================================================
 
-const HIGHLIGHT_STORAGE_KEY =
-    "highlights";
+const ANNOTATION_STORAGE_KEY =
+    "annotations";
 
 // =====================================================
-// GET ALL HIGHLIGHTS
+// GET ALL ANNOTATIONS
 // =====================================================
 
-function getAllHighlights(callback) {
+function getAllAnnotations(callback) {
 
     chrome.storage.local.get(
-        [HIGHLIGHT_STORAGE_KEY],
+        [ANNOTATION_STORAGE_KEY],
         (result) => {
 
             callback(
                 result[
-                    HIGHLIGHT_STORAGE_KEY
+                    ANNOTATION_STORAGE_KEY
                 ] || []
             );
         }
@@ -27,15 +27,11 @@ function getAllHighlights(callback) {
 }
 
 // =====================================================
-// SAVE HIGHLIGHT
+// SAVE ANNOTATION
 // =====================================================
 
-// =====================================================
-// SAVE HIGHLIGHT
-// =====================================================
-
-async function saveHighlight(
-    highlightData
+async function saveAnnotation(
+    annotationData
 ) {
 
     const pageUrl =
@@ -44,28 +40,28 @@ async function saveHighlight(
     return new Promise(
         (resolve) => {
 
-            getAllHighlights(
-                (highlights) => {
+            getAllAnnotations(
+                (annotations) => {
 
-                    // -----------------------------
+                    // -----------------------------------------
                     // PREVENT DUPLICATES
-                    // -----------------------------
+                    // -----------------------------------------
 
                     const alreadyExists =
-                        highlights.some(
-                            h =>
+                        annotations.some(
+                            a =>
 
-                                h.url ===
+                                a.url ===
                                 pageUrl &&
 
-                                h.text ===
-                                highlightData.text &&
+                                a.text ===
+                                annotationData.text &&
 
-                                h.startXPath ===
-                                highlightData.startXPath &&
+                                a.startXPath ===
+                                annotationData.startXPath &&
 
-                                h.startOffset ===
-                                highlightData.startOffset
+                                a.startOffset ===
+                                annotationData.startOffset
                         );
 
                     if (alreadyExists) {
@@ -75,11 +71,11 @@ async function saveHighlight(
                         return;
                     }
 
-                    // -----------------------------
-                    // ADD NEW HIGHLIGHT
-                    // -----------------------------
+                    // -----------------------------------------
+                    // CREATE ANNOTATION
+                    // -----------------------------------------
 
-                    highlights.push({
+                    annotations.push({
 
                         id:
                             crypto.randomUUID(),
@@ -87,25 +83,36 @@ async function saveHighlight(
                         url:
                             pageUrl,
 
-                        ...highlightData
+                        highlight:
+                            false,
+
+                        note:
+                            "",
+
+                        review:
+                            false,
+
+                        createdAt:
+                            Date.now(),
+
+                        updatedAt:
+                            Date.now(),
+
+                        ...annotationData
                     });
 
-                    // -----------------------------
-                    // SAVE TO STORAGE
-                    // -----------------------------
+                    // -----------------------------------------
+                    // SAVE
+                    // -----------------------------------------
 
                     chrome.storage.local.set(
 
                         {
-                            [HIGHLIGHT_STORAGE_KEY]:
-                                highlights
+                            [ANNOTATION_STORAGE_KEY]:
+                                annotations
                         },
 
                         () => {
-
-                            // ---------------------
-                            // HANDLE STORAGE ERRORS
-                            // ---------------------
 
                             if (
                                 chrome.runtime
@@ -126,7 +133,7 @@ async function saveHighlight(
                             }
 
                             console.log(
-                                "Highlight saved!"
+                                "Annotation saved!"
                             );
 
                             resolve(true);
@@ -134,29 +141,117 @@ async function saveHighlight(
                     );
                 }
             );
+
         }
     );
 }
 
 // =====================================================
-// GET HIGHLIGHTS FOR CURRENT PAGE
+// GET CURRENT PAGE ANNOTATIONS
 // =====================================================
 
-function getPageHighlights(callback) {
+function getPageAnnotations(
+    callback
+) {
 
     const pageUrl =
         window.location.href;
 
-    getAllHighlights(
-        (highlights) => {
+    getAllAnnotations(
+        (annotations) => {
 
-            const filtered =
-                highlights.filter(
-                    h =>
-                        h.url === pageUrl
-                );
+            callback(
 
-            callback(filtered);
+                annotations.filter(
+                    a =>
+                        a.url === pageUrl
+                )
+
+            );
+
         }
     );
+}
+
+
+function updateAnnotation(
+    annotationId,
+    updates
+) {
+
+    return new Promise(
+
+        (resolve) => {
+
+            getAllAnnotations(
+
+                (annotations) => {
+
+                    const annotation =
+                        annotations.find(
+
+                            a =>
+
+                                a.id ===
+                                annotationId
+
+                        );
+
+                    if (
+                        !annotation
+                    ) {
+
+                        resolve(
+                            false
+                        );
+
+                        return;
+
+                    }
+
+                    Object.assign(
+
+                        annotation,
+
+                        updates,
+
+                        {
+
+                            updatedAt:
+                                Date.now()
+
+                        }
+
+                    );
+
+                    chrome.storage.local.set(
+
+                        {
+
+                            [ANNOTATION_STORAGE_KEY]:
+                                annotations
+
+                        },
+
+                        () => {
+
+                            resolve(
+
+                                !chrome.runtime
+                                    .lastError
+
+                            );
+
+                        }
+
+                    );
+
+                }
+
+            );
+
+        }
+
+    );
+
 }

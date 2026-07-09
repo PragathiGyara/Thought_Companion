@@ -5,26 +5,37 @@ console.log("HIGHLIGHT JS LOADED");
 // =====================================================
 
 async function applyHighlight(range) {
+
     if (!isSafeRange(range)) {
+
         showToast(
             "Complex highlights are not supported yet",
             "error"
         );
+
         return;
     }
+
     if (range.collapsed) {
+
         return;
     }
+
     let span = null;
+
     try {
+
         // -------------------------------------------------
         // SERIALIZE RANGE BEFORE DOM CHANGES
         // -------------------------------------------------
+
         const serializedRange =
             serializeRange(range);
+
         // -------------------------------------------------
-        // EXTRACT CONTENT
+        // CREATE HIGHLIGHT SPAN
         // -------------------------------------------------
+
         span =
             document.createElement(
                 "span"
@@ -47,9 +58,7 @@ async function applyHighlight(range) {
             );
 
             showToast(
-
                 "Could not create highlight",
-
                 "error"
             );
 
@@ -57,13 +66,16 @@ async function applyHighlight(range) {
         }
 
         // -------------------------------------------------
-        // SAVE AFTER DOM INSERTION
+        // SAVE AS AN ANNOTATION
         // -------------------------------------------------
 
         const saved =
-            await saveHighlight(
-                serializedRange
-            );
+            await saveAnnotation({
+
+                ...serializedRange,
+
+                highlight: true
+            });
 
         // -------------------------------------------------
         // HANDLE STORAGE FAILURE
@@ -113,9 +125,7 @@ async function applyHighlight(range) {
         }
 
         showToast(
-
             "Could not create highlight",
-
             "error"
         );
     }
@@ -126,8 +136,19 @@ async function applyHighlight(range) {
 // =====================================================
 
 function highlightTextOnPage(
-    highlightData
+    annotation
 ) {
+
+    // -------------------------------------------------
+    // ONLY RESTORE HIGHLIGHTS
+    // -------------------------------------------------
+
+    if (
+        !annotation.highlight
+    ) {
+
+        return true;
+    }
 
     // -------------------------------------------------
     // TRY EXACT RANGE RESTORATION
@@ -135,7 +156,7 @@ function highlightTextOnPage(
 
     const range =
         deserializeRange(
-            highlightData
+            annotation
         );
 
     if (!range) {
@@ -144,7 +165,7 @@ function highlightTextOnPage(
             "Range restoration failed"
         );
 
-        return;
+        return false;
     }
 
     try {
@@ -161,22 +182,27 @@ function highlightTextOnPage(
         span.className =
             "thought-highlight";
 
-        span.dataset.highlightId =
-            highlightData.id;
+        span.dataset.annotationId =
+            annotation.id;
 
         // -------------------------------------------------
-        // EXTRACT + WRAP CONTENT
+        // WRAP CONTENT
         // -------------------------------------------------
 
         range.surroundContents(
             span
         );
+
+        return true;
+
     } catch (err) {
 
         console.log(
             "Restore failed:",
             err
         );
+
+        return false;
     }
 }
 
@@ -184,53 +210,75 @@ function highlightTextOnPage(
 // RESTORE ALL HIGHLIGHTS
 // =====================================================
 
-// =====================================================
-// RESTORE ALL HIGHLIGHTS
-// =====================================================
-
 function restoreHighlights() {
 
-    getPageHighlights(
-        (pageHighlights) => {
+    getPageAnnotations(
+
+        (pageAnnotations) => {
 
             let failedCount = 0;
 
-            pageHighlights.forEach(
-                (highlight) => {
+            pageAnnotations
 
-                    try {
+                .filter(
 
-                        const success =
-                            highlightTextOnPage(
-                                highlight
-                            );
+                    annotation =>
 
-                        if (!success) {
+                        annotation.highlight
+
+                )
+
+                .forEach(
+
+                    (annotation) => {
+
+                        try {
+
+                            const success =
+                                highlightTextOnPage(
+                                    annotation
+                                );
+
+                            if (
+                                success === false
+                            ) {
+
+                                failedCount++;
+
+                            }
+
+                        } catch (err) {
 
                             failedCount++;
+
                         }
 
-                    } catch (err) {
-
-                        failedCount++;
                     }
-                }
-            );
+
+                );
 
             // ---------------------------------------------
             // SHOW SINGLE FAILURE TOAST
             // ---------------------------------------------
 
-            if (failedCount > 0) {
+            if (
+
+                failedCount > 0
+
+            ) {
 
                 showToast(
 
                     `${failedCount} highlight(s) could not be restored`,
 
                     "error"
+
                 );
+
             }
+
         }
+
     );
 }
 

@@ -20,29 +20,29 @@ function createToolbar(x, y) {
     toolbar.id =
         "thought-companion-toolbar";
 
-    toolbar.innerHTML = `
-        <button id="highlight-btn">
-            Highlight
-        </button>
-
-        <button id="annotate-btn">
-            Annotate
-        </button>
-
-        <button id="review-btn">
-            Review
-        </button>
-    `;
-
-    // -------------------------------------------------
-    // POSITION TOOLBAR
-    // -------------------------------------------------
-
     toolbar.style.top =
         `${y}px`;
 
     toolbar.style.left =
         `${x}px`;
+
+    toolbar.innerHTML = `
+        <div id="toolbar-actions">
+
+            <button id="highlight-btn">
+                Highlight
+            </button>
+
+            <button id="annotate-btn">
+                Annotate
+            </button>
+
+            <button id="review-btn">
+                Review
+            </button>
+
+        </div>
+    `;
 
     document.body.appendChild(
         toolbar
@@ -56,14 +56,41 @@ function createToolbar(x, y) {
         "mousedown",
         (event) => {
 
+            // ---------------------------------------------
+            // ALLOW TEXT INPUTS TO RECEIVE FOCUS
+            // ---------------------------------------------
+
+            if (
+
+                event.target.closest(
+                    "textarea"
+                ) ||
+
+                event.target.closest(
+                    "input"
+                )
+
+            ) {
+
+                event.stopPropagation();
+
+                return;
+
+            }
+
+            // ---------------------------------------------
+            // PREVENT TEXT SELECTION LOSS
+            // ---------------------------------------------
+
             event.preventDefault();
+
             event.stopPropagation();
 
         }
     );
 
     // -------------------------------------------------
-    // HIGHLIGHT BUTTON
+    // HIGHLIGHT
     // -------------------------------------------------
 
     document
@@ -80,22 +107,29 @@ function createToolbar(x, y) {
                 if (
                     !selection.rangeCount
                 ) {
+
                     return;
+
                 }
 
                 const range =
-                    selection.getRangeAt(0);
+                    selection.getRangeAt(
+                        0
+                    );
 
-                applyHighlight(range);
+                applyHighlight(
+                    range
+                );
 
                 selection.removeAllRanges();
 
                 removeToolbar();
+
             }
         );
 
     // -------------------------------------------------
-    // ANNOTATE BUTTON
+    // ANNOTATE
     // -------------------------------------------------
 
     document
@@ -106,15 +140,137 @@ function createToolbar(x, y) {
             "click",
             () => {
 
-                console.log(
-                    "Annotate clicked"
-                );
+                toolbar.innerHTML = `
+
+                    <textarea
+                        id="annotation-text"
+                        placeholder="Write a note..."
+                    ></textarea>
+
+                    <div id="annotation-actions">
+
+                        <button id="save-annotation-btn">
+                            Save
+                        </button>
+
+                        <button id="cancel-annotation-btn">
+                            Cancel
+                        </button>
+
+                    </div>
+
+                `;
+
+                document
+                    .getElementById(
+                        "save-annotation-btn"
+                    )
+                    .addEventListener(
+                        "click",
+                        async () => {
+
+                            const selection =
+                                window.getSelection();
+
+                            if (
+                                !selection.rangeCount
+                            ) {
+
+                                removeToolbar();
+
+                                return;
+
+                            }
+
+                            const note =
+                                document
+                                    .getElementById(
+                                        "annotation-text"
+                                    )
+                                    .value
+                                    .trim();
+
+                            if (
+                                note.length === 0
+                            ) {
+
+                                showToast(
+                                    "Annotation cannot be empty",
+                                    "error"
+                                );
+
+                                return;
+
+                            }
+
+                            const range =
+                                selection.getRangeAt(
+                                    0
+                                );
+
+                            const serializedRange =
+                                serializeRange(
+                                    range
+                                );
+
+                            const saved =
+                                await saveAnnotation({
+
+                                    ...serializedRange,
+
+                                    highlight:
+                                        false,
+
+                                    note,
+
+                                    review:
+                                        false
+
+                                });
+
+                            if (
+                                saved
+                            ) {
+
+                                showToast(
+                                    "Annotation saved",
+                                    "success"
+                                );
+
+                            } else {
+
+                                showToast(
+                                    "Could not save annotation",
+                                    "error"
+                                );
+
+                            }
+
+                            selection.removeAllRanges();
+
+                            removeToolbar();
+
+                        }
+                    );
+
+                document
+                    .getElementById(
+                        "cancel-annotation-btn"
+                    )
+                    .addEventListener(
+                        "click",
+                        () => {
+
+                            removeToolbar();
+
+                        }
+                    );
 
             }
         );
 
     // -------------------------------------------------
-    // REVIEW BUTTON
+    // REVIEW
     // -------------------------------------------------
 
     document
@@ -131,6 +287,7 @@ function createToolbar(x, y) {
 
             }
         );
+
 }
 
 // =====================================================
