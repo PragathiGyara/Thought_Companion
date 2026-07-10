@@ -293,5 +293,7 @@ window.addEventListener(
 
         restoreHighlights();
 
+        updateThoughtPanel();
+
     }
 );

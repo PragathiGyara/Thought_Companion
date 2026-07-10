@@ -43,9 +43,9 @@ async function saveAnnotation(
             getAllAnnotations(
                 (annotations) => {
 
-                    // -----------------------------------------
+                    // -----------------------------
                     // PREVENT DUPLICATES
-                    // -----------------------------------------
+                    // -----------------------------
 
                     const alreadyExists =
                         annotations.some(
@@ -71,11 +71,11 @@ async function saveAnnotation(
                         return;
                     }
 
-                    // -----------------------------------------
+                    // -----------------------------
                     // CREATE ANNOTATION
-                    // -----------------------------------------
+                    // -----------------------------
 
-                    annotations.push({
+                    const annotation = {
 
                         id:
                             crypto.randomUUID(),
@@ -99,11 +99,15 @@ async function saveAnnotation(
                             Date.now(),
 
                         ...annotationData
-                    });
+                    };
 
-                    // -----------------------------------------
+                    annotations.push(
+                        annotation
+                    );
+
+                    // -----------------------------
                     // SAVE
-                    // -----------------------------------------
+                    // -----------------------------
 
                     chrome.storage.local.set(
 
@@ -132,17 +136,43 @@ async function saveAnnotation(
                                 return;
                             }
 
+                            // -------------------------
+                            // NOTIFY UI
+                            // -------------------------
+
+                            window.dispatchEvent(
+
+                                new CustomEvent(
+
+                                    "thought-companion-updated",
+
+                                    {
+
+                                        detail:
+                                            annotation
+
+                                    }
+
+                                )
+
+                            );
+
                             console.log(
                                 "Annotation saved!"
                             );
 
                             resolve(true);
+
                         }
+
                     );
+
                 }
+
             );
 
         }
+
     );
 }
 
