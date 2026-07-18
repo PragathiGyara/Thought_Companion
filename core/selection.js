@@ -131,55 +131,41 @@ function serializeRange(range) {
 
 function isSafeRange(range) {
 
-    const startContainer =
-        range.startContainer;
+    // -------------------------------------------------
+    // INVALID RANGE
+    // -------------------------------------------------
 
-    const endContainer =
-        range.endContainer;
+    if (!range) {
+
+        return false;
+
+    }
 
     // -------------------------------------------------
-    // SAME NODE = SAFE
+    // EMPTY SELECTION
+    // -------------------------------------------------
+
+    if (range.collapsed) {
+
+        return false;
+
+    }
+
+    // -------------------------------------------------
+    // START / END MUST EXIST
     // -------------------------------------------------
 
     if (
-        startContainer ===
-        endContainer
+        !range.startContainer ||
+        !range.endContainer
     ) {
 
-        return true;
+        return false;
+
     }
 
-    // -------------------------------------------------
-    // ALLOW ENTIRE ELEMENT SELECTIONS
-    // -------------------------------------------------
+    return true;
 
-    const commonAncestor =
-        range.commonAncestorContainer;
-
-    // If selection fully contains an anchor
-    // but does not partially split it,
-    // allow it.
-
-    const fragment =
-        range.cloneContents();
-
-    const partialLinks =
-        fragment.querySelectorAll("a");
-
-    for (const link of partialLinks) {
-
-        if (
-            !link.textContent.trim()
-        ) {
-            return false;
-        }
-    }
-
-    // -------------------------------------------------
-    // REJECT COMPLEX MULTI-NODE RANGES
-    // -------------------------------------------------
-
-    return false;
 }
 
 

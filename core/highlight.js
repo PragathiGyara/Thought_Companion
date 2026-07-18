@@ -1,134 +1,469 @@
 console.log("HIGHLIGHT JS LOADED");
 
+
+// =====================================================
+// WRAP RANGE ACROSS MULTIPLE TEXT NODES
+// =====================================================
+
+function wrapRange(
+    range,
+    annotationId = ""
+) {
+
+    // -------------------------------------------------
+    // COLLECT TEXT NODES FIRST
+    // -------------------------------------------------
+
+    const walker =
+        document.createTreeWalker(
+
+            range.commonAncestorContainer,
+
+            NodeFilter.SHOW_TEXT
+
+        );
+
+    const textNodes = [];
+
+    let node;
+
+    while (
+        (node = walker.nextNode())
+    ) {
+
+        if (
+            range.intersectsNode(node)
+        ) {
+
+            textNodes.push(node);
+
+        }
+
+    }
+
+    // -------------------------------------------------
+    // WRAP EACH TEXT NODE
+    // -------------------------------------------------
+
+    textNodes.forEach(
+
+        (textNode) => {
+
+            const nodeRange =
+                document.createRange();
+
+            let start = 0;
+
+            let end =
+                textNode.length;
+
+            if (
+                textNode ===
+                range.startContainer
+            ) {
+
+                start =
+                    range.startOffset;
+
+            }
+
+            if (
+                textNode ===
+                range.endContainer
+            ) {
+
+                end =
+                    range.endOffset;
+
+            }
+
+            if (
+                start === end
+            ) {
+
+                return;
+
+            }
+
+            nodeRange.setStart(
+                textNode,
+                start
+            );
+
+            nodeRange.setEnd(
+                textNode,
+                end
+            );
+
+            const span =
+                document.createElement(
+                    "span"
+                );
+
+            span.className =
+                "thought-highlight";
+
+            if (
+                annotationId
+            ) {
+
+                span.dataset.annotationId =
+                    annotationId;
+
+            }
+
+            nodeRange.surroundContents(
+                span
+            );
+
+        }
+
+    );
+
+}
+
+
+
 // =====================================================
 // APPLY HIGHLIGHT
 // =====================================================
 
 async function applyHighlight(range) {
 
-    if (!isSafeRange(range)) {
+    if (
+        !isSafeRange(range)
+    ) {
 
         showToast(
-            "Complex highlights are not supported yet",
+            "Invalid selection",
             "error"
         );
 
         return;
+
     }
 
-    if (range.collapsed) {
+    // -------------------------------------------------
+    // SERIALIZE BEFORE DOM CHANGES
+    // -------------------------------------------------
 
-        return;
-    }
-
-    let span = null;
+    const serializedRange =
+        serializeRange(
+            range
+        );
 
     try {
 
         // -------------------------------------------------
-        // SERIALIZE RANGE BEFORE DOM CHANGES
+        // SAVE ANNOTATION
         // -------------------------------------------------
 
-        const serializedRange =
-            serializeRange(range);
+        const annotation = {
 
-        // -------------------------------------------------
-        // CREATE HIGHLIGHT SPAN
-        // -------------------------------------------------
+            ...serializedRange,
 
-        span =
-            document.createElement(
-                "span"
-            );
+            highlight: true
 
-        span.className =
-            "thought-highlight";
-
-        try {
-
-            range.surroundContents(
-                span
-            );
-
-        } catch (err) {
-
-            console.error(
-                "surroundContents failed:",
-                err
-            );
-
-            showToast(
-                "Could not create highlight",
-                "error"
-            );
-
-            return;
-        }
-
-        // -------------------------------------------------
-        // SAVE AS AN ANNOTATION
-        // -------------------------------------------------
+        };
 
         const saved =
-            await saveAnnotation({
-
-                ...serializedRange,
-
-                highlight: true
-            });
+            await saveAnnotation(
+                annotation
+            );
 
         // -------------------------------------------------
         // HANDLE STORAGE FAILURE
         // -------------------------------------------------
 
-        if (!saved) {
+        if (
+            !saved
+        ) {
 
             showToast(
 
-                "Highlight created but could not be saved",
+                "Could not save highlight",
 
                 "error"
+
             );
 
-            console.error(
-                "Storage save failed"
-            );
+            return;
+
         }
 
-    } catch (err) {
+        // -------------------------------------------------
+        // GET SAVED ANNOTATION ID
+        // -------------------------------------------------
+
+        getPageAnnotations(
+
+            (annotations) => {
+
+                const savedAnnotation =
+                    annotations.find(
+
+                        a =>
+
+                            a.highlight &&
+
+                            a.text ===
+                            serializedRange.text &&
+
+                            a.startXPath ===
+                            serializedRange.startXPath &&
+
+                            a.startOffset ===
+                            serializedRange.startOffset
+
+                    );
+
+                wrapRange(
+
+                    range,
+
+                    savedAnnotation?.id || ""
+
+                );
+
+            }
+
+        );
+
+    }
+
+    catch (err) {
 
         console.error(
             "Highlight failed:",
             err
         );
 
-        // -------------------------------------------------
-        // ROLLBACK FAILED INSERTION
-        // -------------------------------------------------
-
-        if (span) {
-
-            const parent =
-                span.parentNode;
-
-            while (
-                span.firstChild
-            ) {
-
-                parent.insertBefore(
-                    span.firstChild,
-                    span
-                );
-            }
-
-            span.remove();
-        }
-
         showToast(
             "Could not create highlight",
             "error"
         );
+
     }
+
+}
+
+// =====================================================
+// COLLECT TEXT NODES INSIDE RANGE
+// =====================================================
+
+function collectTextNodes(range) {
+
+    const root =
+        range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+            ? range.commonAncestorContainer.parentNode
+            : range.commonAncestorContainer;
+
+    const walker =
+        document.createTreeWalker(
+
+            root,
+
+            NodeFilter.SHOW_TEXT,
+
+            {
+
+                acceptNode(node) {
+
+                    return range.intersectsNode(node)
+
+                        ? NodeFilter.FILTER_ACCEPT
+
+                        : NodeFilter.FILTER_REJECT;
+
+                }
+
+            }
+
+        );
+
+    const textNodes = [];
+
+    let node;
+
+    while (
+        (node = walker.nextNode())
+    ) {
+
+        if (
+            node.textContent.length > 0
+        ) {
+
+            textNodes.push(node);
+
+        }
+
+    }
+
+    return textNodes;
+
+}
+
+// =====================================================
+// WRAP TEXT NODE
+// =====================================================
+
+function wrapTextNode(
+    textNode,
+    startOffset,
+    endOffset,
+    annotationId = ""
+) {
+
+    // -------------------------------------------------
+    // NOTHING TO WRAP
+    // -------------------------------------------------
+
+    if (
+        startOffset >= endOffset
+    ) {
+
+        return;
+
+    }
+
+    // -------------------------------------------------
+    // SPLIT END FIRST
+    // -------------------------------------------------
+
+    if (
+        endOffset <
+        textNode.length
+    ) {
+
+        textNode.splitText(
+            endOffset
+        );
+
+    }
+
+    // -------------------------------------------------
+    // SPLIT START
+    // -------------------------------------------------
+
+    let selectedNode =
+        textNode;
+
+    if (
+        startOffset > 0
+    ) {
+
+        selectedNode =
+            textNode.splitText(
+                startOffset
+            );
+
+    }
+
+    // -------------------------------------------------
+    // SKIP IF ALREADY HIGHLIGHTED
+    // -------------------------------------------------
+
+    if (
+        selectedNode.parentElement?.classList.contains(
+            "thought-highlight"
+        )
+    ) {
+
+        return;
+
+    }
+
+    // -------------------------------------------------
+    // CREATE SPAN
+    // -------------------------------------------------
+
+    const span =
+        document.createElement(
+            "span"
+        );
+
+    span.className =
+        "thought-highlight";
+
+    if (
+        annotationId
+    ) {
+
+        span.dataset.annotationId =
+            annotationId;
+
+    }
+
+    selectedNode.parentNode.insertBefore(
+        span,
+        selectedNode
+    );
+
+    span.appendChild(
+        selectedNode
+    );
+
+}
+
+// =====================================================
+// WRAP RANGE
+// =====================================================
+
+function wrapRange(
+    range,
+    annotationId = ""
+) {
+
+    const textNodes =
+        collectTextNodes(
+            range
+        );
+
+    textNodes.forEach(
+
+        (textNode) => {
+
+            let start = 0;
+
+            let end =
+                textNode.length;
+
+            if (
+                textNode ===
+                range.startContainer
+            ) {
+
+                start =
+                    range.startOffset;
+
+            }
+
+            if (
+                textNode ===
+                range.endContainer
+            ) {
+
+                end =
+                    range.endOffset;
+
+            }
+
+            wrapTextNode(
+
+                textNode,
+
+                start,
+
+                end,
+
+                annotationId
+
+            );
+
+        }
+
+    );
+
 }
 
 // =====================================================
