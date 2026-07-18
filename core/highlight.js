@@ -1,5 +1,11 @@
 console.log("HIGHLIGHT JS LOADED");
 
+// =====================================================
+// HIGHLIGHT STATE
+// =====================================================
+
+let highlightsLoaded = false;
+
 
 // =====================================================
 // WRAP RANGE ACROSS MULTIPLE TEXT NODES
@@ -547,6 +553,8 @@ function highlightTextOnPage(
 
 function restoreHighlights() {
 
+    console.log(document.body.innerHTML.length);
+
     getPageAnnotations(
 
         (pageAnnotations) => {
@@ -632,3 +640,38 @@ window.addEventListener(
 
     }
 );
+
+// =====================================================
+// TOGGLE HIGHLIGHTS
+// =====================================================
+
+function toggleHighlightsOnPage(show) {
+
+    if (show && !highlightsLoaded) {
+
+        restoreHighlights();
+
+        highlightsLoaded = true;
+
+    }
+
+    document
+
+        .querySelectorAll(
+            ".thought-highlight"
+        )
+
+        .forEach(
+
+            (highlight) => {
+
+                highlight.style.display =
+                    show
+                        ? ""
+                        : "none";
+
+            }
+
+        );
+
+}

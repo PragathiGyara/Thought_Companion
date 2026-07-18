@@ -173,6 +173,10 @@ function isSafeRange(range) {
 // GET NODE FROM XPATH
 // =====================================================
 
+// =====================================================
+// GET NODE FROM XPATH
+// =====================================================
+
 function getNodeFromXPath(xpath) {
 
     try {
@@ -192,6 +196,16 @@ function getNodeFromXPath(xpath) {
                 null
             );
 
+        if (
+            !result.singleNodeValue
+        ) {
+
+            console.log(
+                "XPath not found:",
+                xpath
+            );
+        }
+
         return result.singleNodeValue;
 
     } catch (err) {
@@ -202,7 +216,9 @@ function getNodeFromXPath(xpath) {
         );
 
         return null;
+
     }
+
 }
 
 // =====================================================

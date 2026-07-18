@@ -64,6 +64,21 @@ function createThoughtPanel() {
                     class="thought-section-content"
                 >
 
+                    <label class="thought-highlight-toggle">
+
+                        <input
+                            type="checkbox"
+                            id="highlightVisibilityToggle"
+                        >
+
+                        Show highlights on page
+
+                    </label>
+
+                    <div id="highlightList">
+
+                    </div>
+
                 </div>
 
             </div>
@@ -162,6 +177,32 @@ function createThoughtPanel() {
 
         );
 
+    // -------------------------------------------------
+    // HIGHLIGHT VISIBILITY
+    // -------------------------------------------------
+
+    document
+
+        .getElementById(
+            "highlightVisibilityToggle"
+        )
+
+        .addEventListener(
+
+            "change",
+
+            (event) => {
+
+                toggleHighlightsOnPage(
+
+                    event.target.checked
+
+                );
+
+            }
+
+        );
+
 }
 
 // =====================================================
@@ -247,7 +288,7 @@ function updateThoughtPanel() {
 
             const highlightContainer =
                 document.getElementById(
-                    "highlight-section"
+                    "highlightList"
                 );
 
             const annotationContainer =
